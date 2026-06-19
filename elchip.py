@@ -2,6 +2,7 @@ import os
 import random
 import threading
 import sys
+from datetime import datetime
 import tkinter as tk
 from tkinter import messagebox
 
@@ -26,6 +27,7 @@ class ElChipApp:
         self.overlay = None
         self.stop_event = threading.Event()
         self.audio_available = False
+        self.last_checked_second = None
 
         self._load_image()
         self._init_audio()
@@ -159,13 +161,20 @@ class ElChipApp:
         if self.stop_event.is_set():
             return
 
-        if self.overlay is None:
-            probability = min(max(self.difficulty / 40.0, 0.025), 0.5)
-            if random.random() < probability:
-                self.show_overlay()
+        now = datetime.now()
+        second = now.second
 
-        interval = random.randint(800, 1800)
-        self.root.after(interval, self._run_random_overlay)
+        # Solo comprobar una vez en los segundos 0, 10, 20, 30, 40 y 50
+        if second % 10 == 0 and second != self.last_checked_second:
+            self.last_checked_second = second
+
+            if self.overlay is None:
+                probability = min(max(self.difficulty / 30.0, 0.0), 1.0)
+
+                if random.random() < probability:
+                    self.show_overlay()
+
+        self.root.after(200, self._run_random_overlay)
 
     def on_exit(self, event=None):
         if messagebox.askokcancel("Exit", "Do you want to close ElChip?"):
